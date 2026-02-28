@@ -1,0 +1,87 @@
+openapi: 3.0.0
+info:
+  title: Credential Core API
+  version: 1.0.0
+  description: API for Credential Management System
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+paths:
+  /auth/login:
+    post:
+      summary: Admin login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+
+  /students:
+    get:
+      summary: Get all students
+      tags: [students]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of students
+    post:
+      summary: Create student
+      tags: [students]
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Student created
+
+  /credentials:
+    get:
+      summary: Get all credentials
+      tags: [credentials]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of credentials
+    post:
+      summary: Issue credential
+      tags: [credentials]
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Credential issued
+
+  /credentials/verify/{code}:
+    get:
+      summary: Get credential by verify code (public)
+      tags: [credentials]
+      responses:
+        '200':
+          description: Credential details
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
