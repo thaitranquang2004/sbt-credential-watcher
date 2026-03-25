@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { StudentsModule } from './students/students.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { EventsModule } from './events/events.module';
+import { WatcherModule } from './watcher/watcher.module';
 import { AppController } from './app.controller';
 import { MockDatabaseService } from './common/services/mock-database.service';
 
@@ -18,6 +19,7 @@ import { MockDatabaseService } from './common/services/mock-database.service';
     StudentsModule,
     CredentialsModule,
     EventsModule,
+    WatcherModule,
   ],
   controllers: [AppController],
   providers: [MockDatabaseService],
