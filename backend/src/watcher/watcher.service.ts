@@ -27,19 +27,50 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async startWatching() {
-    const rpcUrl = this.configService.get<string>('POLYGON_RPC_URL');
+    const primaryRpc = this.configService.get<string>('POLYGON_RPC_URL');
     const contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
     const apiBaseUrl = this.configService.get<string>('API_BASE_URL', 'http://localhost:3000');
 
-    if (!rpcUrl || !contractAddress) {
+    if (!primaryRpc || !contractAddress) {
       this.logger.warn('POLYGON_RPC_URL or CONTRACT_ADDRESS not configured. Watcher disabled.');
       return;
     }
 
+    // Fallback RPC URLs for Polygon Amoy
+    const rpcUrls = [
+      primaryRpc,
+      'https://rpc-amoy.polygon.technology',
+      'https://polygon-amoy.drpc.org',
+      'https://polygon-amoy-bor-rpc.publicnode.com',
+    ];
+
     try {
-      this.provider = new ethers.JsonRpcProvider(rpcUrl);
-      const network = await this.provider.getNetwork();
-      this.logger.log(`Connected to network: ${network.name} (chainId: ${network.chainId})`);
+      // Try each RPC URL until one works
+      let connected = false;
+      for (const rpcUrl of rpcUrls) {
+        try {
+          this.logger.log(`Trying RPC: ${rpcUrl}`);
+          this.provider = new ethers.JsonRpcProvider(rpcUrl, undefined, {
+            staticNetwork: true,
+            polling: true,
+            pollingInterval: 15000,
+          });
+          // Force a quick test call
+          const network = await Promise.race([
+            this.provider.getNetwork(),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RPC timeout')), 5000)),
+          ]);
+          this.logger.log(`Connected to network: ${network.name} (chainId: ${network.chainId}) via ${rpcUrl}`);
+          connected = true;
+          break;
+        } catch (err) {
+          this.logger.warn(`RPC failed: ${rpcUrl} - ${err.message}`);
+        }
+      }
+
+      if (!connected) {
+        throw new Error('All RPC endpoints failed');
+      }
 
       this.contract = new ethers.Contract(contractAddress, DiplomaRegistryABI, this.provider);
       this.logger.log(`Watching contract: ${contractAddress}`);
