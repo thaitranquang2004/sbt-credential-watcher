@@ -1,15 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import express from 'express';
 import { AppModule } from './app.module';
+import { createApiProxyMiddleware } from './proxy/api-proxy.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
   
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3001',
     credentials: true,
   });
+
+  const configService = app.get(ConfigService);
+  const expressApp = app.getHttpAdapter().getInstance();
+
+  // Proxy legacy REST routes before body parsing so multipart requests stay streamable.
+  expressApp.use(
+    createApiProxyMiddleware(
+      configService.get<string>('API_BASE_URL', 'http://localhost:3000'),
+    ),
+  );
+  expressApp.use(express.json());
+  expressApp.use(express.urlencoded({ extended: true }));
   
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
@@ -17,8 +32,8 @@ async function bootstrap() {
   }));
   
   const config = new DocumentBuilder()
-    .setTitle('Credential Core API')
-    .setDescription('API for Credential Management System')
+    .setTitle('Credential Watcher Service')
+    .setDescription('Realtime relay and blockchain watcher for Credential Core')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

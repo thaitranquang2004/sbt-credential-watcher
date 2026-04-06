@@ -143,10 +143,10 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
     // DiplomaRevoked event
     this.contract.on('DiplomaRevoked', async (
       tokenId: bigint,
-      recipient: string,
+      _recipient: string,
       reason: string,
       revokedBy: string,
-      revokedAt: bigint,
+      _revokedAt: bigint,
       event: ethers.EventLog,
     ) => {
       this.logger.log(`DiplomaRevoked: tokenId=${tokenId}, reason=${reason}`);
@@ -170,10 +170,10 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
     // DiplomaSuspended event
     this.contract.on('DiplomaSuspended', async (
       tokenId: bigint,
-      recipient: string,
+      _recipient: string,
       reason: string,
       suspendedBy: string,
-      suspendedAt: bigint,
+      _suspendedAt: bigint,
       event: ethers.EventLog,
     ) => {
       this.logger.log(`DiplomaSuspended: tokenId=${tokenId}, reason=${reason}`);
@@ -197,9 +197,9 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
     // DiplomaReinstated event
     this.contract.on('DiplomaReinstated', async (
       tokenId: bigint,
-      recipient: string,
+      _recipient: string,
       reinstatedBy: string,
-      reinstatedAt: bigint,
+      _reinstatedAt: bigint,
       event: ethers.EventLog,
     ) => {
       this.logger.log(`DiplomaReinstated: tokenId=${tokenId}`);
