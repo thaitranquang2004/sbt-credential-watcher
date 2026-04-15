@@ -36,7 +36,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    // Fallback RPC URLs for Polygon Amoy
     const rpcUrls = [
       primaryRpc,
       'https://rpc-amoy.polygon.technology',
@@ -45,7 +44,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
     ];
 
     try {
-      // Try each RPC URL until one works
       let connected = false;
       for (const rpcUrl of rpcUrls) {
         try {
@@ -55,7 +53,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
             polling: true,
             pollingInterval: 15000,
           });
-          // Force a quick test call
           const network = await Promise.race([
             this.provider.getNetwork(),
             new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RPC timeout')), 5000)),
@@ -85,7 +82,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async attachEventListeners(apiBaseUrl: string) {
-    // DiplomaIssued event
     this.contract.on('DiplomaIssued', async (
       tokenId: bigint,
       recipient: string,
@@ -114,7 +110,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
         txHash,
       };
 
-      // Notify the API backend
       try {
         await axios.post(`${apiBaseUrl}/watcher/credential-confirmed`, {
           txHash,
@@ -127,20 +122,18 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(`Failed to notify API: ${err.message}`);
       }
 
-      // Emit WebSocket events to connected clients
       this.eventsGateway.emitCredentialIssued(studentId, {
         event: 'DiplomaIssued',
         ...payload,
       });
 
       this.eventsGateway.emitTxConfirmed(
-        studentId,
+        tokenId.toString(),
         txHash,
         tokenId.toString(),
       );
     });
 
-    // DiplomaRevoked event
     this.contract.on('DiplomaRevoked', async (
       tokenId: bigint,
       _recipient: string,
@@ -167,7 +160,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
       this.eventsGateway.emitCredentialStatusChanged(tokenId.toString(), 'revoked');
     });
 
-    // DiplomaSuspended event
     this.contract.on('DiplomaSuspended', async (
       tokenId: bigint,
       _recipient: string,
@@ -194,7 +186,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
       this.eventsGateway.emitCredentialStatusChanged(tokenId.toString(), 'suspended');
     });
 
-    // DiplomaReinstated event
     this.contract.on('DiplomaReinstated', async (
       tokenId: bigint,
       _recipient: string,
@@ -219,7 +210,6 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
       this.eventsGateway.emitCredentialStatusChanged(tokenId.toString(), 'confirmed');
     });
 
-    // Handle provider errors for auto-reconnect
     this.provider.on('error', (error) => {
       this.logger.error(`Provider error: ${error.message}`);
       this.scheduleReconnect();
@@ -229,7 +219,7 @@ export class WatcherService implements OnModuleInit, OnModuleDestroy {
   private scheduleReconnect() {
     if (this.reconnectTimer) return;
 
-    const delay = 10000; // 10 seconds
+    const delay = 10000;
     this.logger.log(`Scheduling reconnect in ${delay / 1000}s...`);
 
     this.reconnectTimer = setTimeout(async () => {
